@@ -21,23 +21,33 @@ Open Anchor does not use the Vast.ai API. You rent, start, stop, and destroy ins
 
 For WSL, a dev container, or Remote SSH, install the extension in that environment. Node, search tools, and command dependencies must be available there. Each window uses one selected workspace; a multi-folder window prompts you to choose.
 
-## Start the model manually
+## Start the model on Vast
 
-Deploy the supplied `worker/Dockerfile` as a Vast Entrypoint template, or use the equivalent official vLLM image configuration in `docs/gpu-setup.md`. The worker downloads/loads the model, serves streaming completions and tool calls, and exposes health/model endpoints on port 8000. It reuses vLLM's API server directly. A starting configuration is one **RTX 5090 32 GB**, Qwen3.8-27B NVFP4, and a 32K context, following the upstream recipe linked in the guide.
+In the **SSH terminal on your running Vast GPU instance**:
 
-The template deploys the worker when you start the instance. Its model must finish loading before Connect succeeds. An inference URL cannot install software on a bare machine: deployment happens through the Vast template, without an SSH connection from the extension.
+```bash
+git clone https://github.com/abaxi326/Anchor.git
+cd Anchor
+bash scripts/vast-server.sh
+```
+
+For an existing checkout, run `git pull --ff-only`, then `bash scripts/vast-server.sh`. The script installs a private Python environment, downloads the model as needed, starts vLLM in the background, and waits for readiness. The GPU needs Linux x86_64, Python 3.10–3.14 with venv support, and a CUDA 12.9-capable NVIDIA driver. Node.js, npm, and the VSIX are only needed beside your VS Code workspace.
+
+The default targets your approximately **68 GB CMP 170HX allocation** with **Qwen3.8-27B BF16**, **16K context**, and the model name **`open-anchor`**. Preflight checks actual GPU capability and memory; this starting configuration still needs live validation on your instance. The server listens on `127.0.0.1:8000`, so select **SSH tunnel** in the extension's advanced settings, use Vast's SSH details, and set context **`16384`** / output limit **`4096`**.
+
+Use `bash scripts/vast-server.sh status`, `logs`, `stop`, or `restart` to manage inference. Repeated starts reuse the existing process and unchanged dependencies. See `docs/gpu-setup.md` for configuration, public HTTP access, and the separate RTX 5090/NVFP4 Docker alternative. The script does not manage Vast rentals; stopping vLLM leaves GPU billing running.
 
 ## Connect
 
-The default direct API connection needs just the worker's address:
+The sidebar defaults to a direct API connection for an already exposed worker. For the bootstrap's loopback listener, choose **SSH tunnel** under advanced settings. Direct connection fields are:
 
 | Field | Example / meaning |
 |---|---|
 | API address | `http://203.0.113.10:31234`, bare `203.0.113.10:31234`, or your worker's HTTPS proxy URL; `/v1` is added if omitted |
 | API key | Optional; the worker's `VLLM_API_KEY`, if configured. This is not your Vast account API key |
 | Model ID | `open-anchor` with the supplied startup script; empty auto-detects only when exactly one model is advertised |
-| Context window | `32768`; must agree with the server configuration |
-| Output token limit | `8192`; must be smaller than the context window |
+| Context window | `16384` for the BF16 bootstrap; must agree with the server configuration |
+| Output token limit | `4096` for the BF16 bootstrap; must be smaller than the context window |
 | Model reasoning | Enabled for Qwen thinking models; disable for a non-thinking model |
 
 Model limits and optional SSH settings are under advanced options. Credentials are saved through VS Code SecretStorage, never in workspace settings or command arguments. Empty inputs retain previously saved values. Use **Open Anchor: Forget Connection Secrets** from the Command Palette to remove saved credentials for the selected profile.
@@ -75,6 +85,12 @@ npm run test:ui
 npm run package
 ```
 
+On Linux, run the bootstrap lifecycle tests; they require no GPU or vLLM installation:
+
+```bash
+python3 -m unittest discover -s tests -p test_vast_server.py -v
+```
+
 Press **F5** to launch an Extension Development Host. Open a project there and select Open Anchor. `npm run watch` rebuilds while you work. Browser tests use installed Microsoft Edge on Windows, or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE`; on other systems install a Playwright Chromium browser with `npx playwright install chromium`.
 
 Tests use local SSH and mock OpenAI-compatible servers: they exercise the actual Pi worker, reasoning/tool-message continuity, approvals, file edits, shell execution, session resume, tunneling, and cancellation without requiring a GPU. Browser tests check the sidebar workflow and safe text rendering. A live Vast.ai/Qwen evaluation requires your running instance and is separate from these checks.
@@ -87,13 +103,14 @@ Tests use local SSH and mock OpenAI-compatible servers: they exercise the actual
 | `src/runtime/` | Isolated Node process and JSONL transport |
 | `src/review/` | Change snapshots and conflict-aware undo |
 | `src/webview/` | Sidebar interface |
+| `scripts/vast-server.sh` | Install and manage vLLM from a Vast SSH terminal |
 | `worker/` | Deployable inference container and Vast template settings |
 
 ## Troubleshooting
 
 - **Cannot start Pi:** check `node --version` in the workspace environment and the `openAnchor.nodePath` setting.
 - **SSH authentication failed:** verify the instance's SSH username/port, that the corresponding public key is installed, and your private-key passphrase.
-- **Model readiness failed:** wait for vLLM to finish loading; verify the URL uses the mapped model port and the optional API key matches. Direct access requires vLLM to listen on `0.0.0.0`, as the supplied worker does.
+- **Model readiness failed:** wait for vLLM to finish loading; verify the URL uses the mapped model port and the optional API key matches. The bootstrap defaults to SSH access through `127.0.0.1`; direct access requires `OPEN_ANCHOR_HOST=0.0.0.0` and an existing Vast port mapping.
 - **Unknown model:** use the ID returned by `/v1/models`, which may differ from its Hugging Face repository when `--served-model-name` is used.
 - **Tool calls appear as text:** check the GPU's vLLM tool parser and `--enable-auto-tool-choice` flags.
 - **Search executable unavailable:** install `rg` and `fd`, restart VS Code, and reconnect.

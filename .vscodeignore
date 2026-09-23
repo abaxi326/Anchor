@@ -4,6 +4,8 @@ tests/**
 scripts/**
 !scripts/start-vllm.sh
 .test-artifacts/**
+.open-anchor-server/**
+**/__pycache__/**
 *.vsix
 tsconfig.json
 playwright.config.ts
