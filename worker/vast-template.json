@@ -1,0 +1,15 @@
+{
+  "name": "Open Anchor inference worker",
+  "description": "Manual template settings; replace the image with your published worker image. This is not a Vast API request.",
+  "image": "YOUR_REGISTRY/open-anchor-worker:0.1.0",
+  "launchMode": "Entrypoint",
+  "dockerOptions": "-p 8000:8000 -e OPEN_BUTTON_PORT=8000",
+  "environment": {
+    "OPEN_ANCHOR_MODEL": "Inferact/Qwen3.8-27B-NVFP4",
+    "OPEN_ANCHOR_CONTEXT": "32768",
+    "HF_HOME": "/workspace/huggingface-cache"
+  },
+  "privateEnvironment": ["VLLM_API_KEY (optional model API key)", "HF_TOKEN (only if your chosen model requires it)"],
+  "internalApiPort": 8000,
+  "modelId": "open-anchor"
+}

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.vsix
+.env
+.env.*
+.test-artifacts/
+coverage/
+test-results/
+playwright-report/

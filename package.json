@@ -1,0 +1,108 @@
+{
+  "name": "open-anchor",
+  "displayName": "Open Anchor",
+  "description": "A personal Pi coding agent connected to your GPU inference worker by API URL.",
+  "version": "0.1.0",
+  "publisher": "open-anchor-local",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.96.0",
+    "node": ">=22.19.0"
+  },
+  "categories": [
+    "Machine Learning",
+    "Other"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "main": "./dist/extension.cjs",
+  "activationEvents": [
+    "onView:openAnchor.sidebar"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "The coding agent executes tools in the workspace."
+    },
+    "virtualWorkspaces": false
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "openAnchor.open",
+        "title": "Open Anchor: Open Coding Agent"
+      },
+      {
+        "command": "openAnchor.disconnect",
+        "title": "Open Anchor: Disconnect"
+      },
+      {
+        "command": "openAnchor.showLogs",
+        "title": "Open Anchor: Show Logs"
+      },
+      {
+        "command": "openAnchor.resetHostKey",
+        "title": "Open Anchor: Reset Trusted SSH Host"
+      },
+      {
+        "command": "openAnchor.forgetSecrets",
+        "title": "Open Anchor: Forget Connection Secrets"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "openAnchor",
+          "title": "Open Anchor",
+          "icon": "media/anchor.svg"
+        }
+      ]
+    },
+    "views": {
+      "openAnchor": [
+        {
+          "type": "webview",
+          "id": "openAnchor.sidebar",
+          "name": "Coding Agent"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Open Anchor",
+      "properties": {
+        "openAnchor.nodePath": {
+          "type": "string",
+          "default": "node",
+          "scope": "machine",
+          "description": "Node.js 22.19+ executable used for the Pi background process."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "test:ui": "npm run build && playwright test",
+    "check": "npm run typecheck && npm test && npm run build",
+    "vscode:prepublish": "npm run build",
+    "package": "vsce package --allow-missing-repository"
+  },
+  "dependencies": {
+    "@earendil-works/pi-ai": "0.87.1",
+    "@earendil-works/pi-coding-agent": "0.87.1",
+    "ssh2": "1.17.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^22.0.0",
+    "@types/ssh2": "^1.15.0",
+    "@types/vscode": "^1.96.0",
+    "@vscode/vsce": "4.0.0",
+    "esbuild": "^0.25.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  }
+}

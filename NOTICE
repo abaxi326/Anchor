@@ -1,0 +1,8 @@
+Open Anchor reuses the Pi coding-agent SDK, Pi model integration, and their
+transitive dependencies. Pi is Copyright (c) its contributors, licensed under
+the MIT License: https://github.com/earendil-works/pi
+
+SSH transport uses ssh2: https://github.com/mscdex/ssh2
+
+Dependency licenses are retained in node_modules in the packaged extension.
+Model weights are not included. The model you deploy has its own license.

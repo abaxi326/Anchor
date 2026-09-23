@@ -1,0 +1,5 @@
+**
+!worker/
+!worker/Dockerfile
+!scripts/
+!scripts/start-vllm.sh
